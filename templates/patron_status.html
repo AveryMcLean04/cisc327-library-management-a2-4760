@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Patron Status{% endblock %}
+
+{% block content %}
+<h1>Patron Status</h1>
+
+<form method="post" class="mb-4">
+  <label for="patron_id">Library Card ID (6 digits)</label>
+  <div>
+    <input id="patron_id" name="patron_id" type="text" value="{{ patron_id or '' }}" maxlength="6" required>
+    <button type="submit">Lookup</button>
+  </div>
+</form>
+
+{% if report is not none %}
+  {% if report.status != 'ok' %}
+    <div class="alert alert-warning">
+      {{ report.status }}
+    </div>
+  {% endif %}
+
+  <h2>Summary</h2>
+  <p><strong>Patron ID:</strong> {{ report.patron_id }}</p>
+  <p><strong>Currently borrowed:</strong> {{ report.num_currently_borrowed }}</p>
+  <p><strong>Total late fees owed:</strong> ${{ "%.2f"|format(report.total_late_fees) }}</p>
+
+  <h3>Currently Borrowed</h3>
+  {% if report.currently_borrowed %}
+    <table>
+      <thead>
+        <tr>
+          <th>Book ID</th><th>Title</th><th>Due Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in report.currently_borrowed %}
+        <tr>
+          <td>{{ b.book_id }}</td>
+          <td>{{ b.title }}</td>
+          <td>{{ b.due_date }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No books currently borrowed.</p>
+  {% endif %}
+
+  <h3>Borrowing History</h3>
+  {% if report.history %}
+    <table>
+      <thead>
+        <tr>
+          <th>Book ID</th><th>Title</th><th>Author</th><th>Borrowed</th><th>Due</th><th>Returned</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in report.history %}
+        <tr>
+          <td>{{ h.book_id }}</td>
+          <td>{{ h.title }}</td>
+          <td>{{ h.author }}</td>
+          <td>{{ h.borrow_date }}</td>
+          <td>{{ h.due_date }}</td>
+          <td>{{ h.return_date or "-" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No borrowing history available.</p>
+  {% endif %}
+{% endif %}
+{% endblock %}
