@@ -38,4 +38,6 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest -q
+            #Ensure fresh DB
+            if [ -f library.db ]; then rm library.db; fi
+            pytest -q
