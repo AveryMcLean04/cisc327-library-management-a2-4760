@@ -1,5 +1,5 @@
 import pytest
-from library_service import get_patron_status_report
+from services.library_service import get_patron_status_report
 
 def test_patron_status_valid_id():
     """Status report should include borrowed books and fees for a valid patron."""
