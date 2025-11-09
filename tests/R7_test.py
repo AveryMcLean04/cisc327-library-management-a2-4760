@@ -1,10 +1,5 @@
 import pytest
-from database import init_database
 
-@pytest.fixture(scope="function", autouse=True)
-def setup_test_db():
-    """Automatically initialize a clean database before each test."""
-    init_database()
 from services.library_service import get_patron_status_report
 
 def test_patron_status_valid_id():

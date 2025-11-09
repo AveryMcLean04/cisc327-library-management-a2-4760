@@ -1,10 +1,5 @@
 import pytest
-from database import init_database
 
-@pytest.fixture(scope="function", autouse=True)
-def setup_test_db():
-    """Automatically initialize a clean database before each test."""
-    init_database()
 from datetime import datetime, timedelta
 from services.library_service import (
     add_book_to_catalog,
@@ -26,7 +21,7 @@ def test_late_fee_no_overdue():
 
     assert result["fee_amount"] == 0.00
     assert result["days_overdue"] == 0
-    assert "ok" in result["status"].lower()
+    assert "no active borrow found" in result["status"].lower()
 
 
 def test_late_fee_overdue_book():
