@@ -1,7 +1,8 @@
 import pytest
 from unittest.mock import Mock, MagicMock
-from services.library_service import pay_late_fees, refund_late_fee_payment
+from services.library_service import pay_late_fees, refund_late_fee_payment, add_book_to_catalog, borrow_book_by_patron, get_patron_status_report
 from services.payment_service import PaymentGateway
+import builtins
 
 # test successful payment
 def test_pay_late_fees_success(mocker):
@@ -31,7 +32,6 @@ def test_pay_late_fees_success(mocker):
         description = "Late fees for '1984'",
     )
 
-    
 
 # payment declined by gateway
 def test_payment_declined_by_gateway(mocker):
@@ -73,7 +73,7 @@ def test_pay_late_fees_invalid_id(mocker):
 
     assert success is False
     assert txn == None
-    assert "Invalid patron ID. Must be exactly 6 digits." in message or "OK" in message
+    assert "Invalid patron ID. Must be exactly 6 digits." in message
 
     gateway.process_payment.assert_not_called()
 
@@ -174,3 +174,63 @@ def test_refund_late_fee_payment_over_15(mocker):
     assert success is False
     assert "Refund amount exceeds maximum late fee." in message
     gateway.refund_payment.assert_not_called()
+
+
+# additional tests to reach 80% coverage:
+
+def test_add_book_title_over_200_chars():
+    long_title = "A" * 201
+    success, message = add_book_to_catalog(long_title, "Author", "1234567890123", 1)
+    assert success is False
+    assert "less than 200 characters" in message.lower()
+
+def test_add_book_author_whitespace_only():
+    success, message = add_book_to_catalog("Valid Title", "   ", "1234567890123", 1)
+    assert success is False
+    assert "author is required" in message.lower()
+
+def test_add_book_total_copies_zero():
+    success, message = add_book_to_catalog("Valid Title", "Author", "1234567890123", 0)
+    assert success is False
+    assert "positive integer" in message.lower()
+
+def test_add_book_total_copies_negative():
+    success, message = add_book_to_catalog("Valid Title", "Author", "1234567890123", -3)
+    assert success is False
+    assert "positive integer" in message.lower()
+
+def test_add_book_total_copies_not_int():
+    success, message = add_book_to_catalog("Valid Title", "Author", "1234567890123", "3")
+    assert success is False
+    assert "positive integer" in message.lower()
+
+def test_borrow_book_not_found():
+    result = borrow_book_by_patron("123456", 999)
+    assert result[0] is False
+    assert "book not found" in result[1].lower()
+
+def test_refund_uses_default_gateway_success():
+    success, message = refund_late_fee_payment("txn_123456", 5.00)
+    assert success is True
+    assert "Refund of $5.00 processed successfully" in message
+
+def test_refund_gateway_declined():
+    gateway = Mock(spec=PaymentGateway)
+    gateway.refund_payment.return_value = (False, "declined by issuer")
+
+    success, message = refund_late_fee_payment("txn_123456", 5.00, payment_gateway=gateway)
+
+    assert success is False
+    assert message == "Refund failed: declined by issuer"
+    gateway.refund_payment.assert_called_once_with("txn_123456", 5.00)
+
+
+def test_refund_gateway_network_down():
+    gateway = Mock(spec=PaymentGateway)
+    gateway.refund_payment.side_effect = RuntimeError("network down")
+
+    success, message = refund_late_fee_payment("txn_123456", 5.00, payment_gateway=gateway)
+
+    assert success is False
+    assert message == "Refund processing error: network down"
+    gateway.refund_payment.assert_called_once_with("txn_123456", 5.00)
