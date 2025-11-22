@@ -1,19 +1,19 @@
 from playwright.sync_api import expect, sync_playwright
 from datetime import datetime, timedelta
 
-def test_launch_app():
-    # just my first test to ensure opening the browser works
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        page = browser.new_page()
+# def test_launch_app():
+#     # just my first test to ensure opening the browser works
+#     with sync_playwright() as p:
+#         browser = p.chromium.launch(headless=False)
+#         page = browser.new_page()
 
-        page.goto("http://localhost:5000/")
+#         page.goto("http://localhost:5000/")
 
-        print(page.title())
+#         print(page.title())
 
-        expect(page).to_have_title("Library Management System")
+#         expect(page).to_have_title("Library Management System")
 
-        browser.close()
+#         browser.close()
 
 def test_add_and_borrow_book():
     with sync_playwright() as p:
@@ -48,6 +48,8 @@ def test_add_and_borrow_book():
         add_message = f'Book "{bookTitle}" has been successfully added to the catalog.'
         expect(page.locator(".flash-success")).to_have_text(add_message)
 
+        expect(page.locator(f'text="{bookTitle}"')).to_be_visible()
+
         #finding the row with the right book title
         row = page.locator(f'text="{bookTitle}"').locator('xpath=..')
         #filling the patron id and clicking borrow
@@ -64,3 +66,44 @@ def test_add_and_borrow_book():
         #closing the browser
         browser.close()
 
+def test_lookup_and_return_book():
+    """
+    The same user as before now wants to return the book, so they check their status, and return the book.
+    """
+    with sync_playwright() as p:
+        # book info for reference
+        bookTitle = "The Playwright Book"
+        author = "Shilliam Wakespeare"
+        copies = "25"
+        isbn = "1231231231231"
+        patronId = "123456"
+
+        browser = p.chromium.launch(headless=False)
+        page = browser.new_page()
+
+        page.goto("http://localhost:5000/")
+
+        print(page.title())
+
+        expect(page).to_have_title("Library Management System")
+
+        page.click("text=👤 Patron Status")
+        expect(page).to_have_url("http://localhost:5000/patron_status")
+
+        page.fill("#patron_id", patronId)
+        page.click("text=Lookup")
+
+        #get book id from status report:
+        row = page.locator(f'text="{bookTitle}"').locator('xpath=..')
+        book_id = row.locator('td:nth-child(1)').first.inner_text()
+
+        page.click("text=↩️ Return Book")
+        expect(page).to_have_url("http://localhost:5000/return")
+        page.fill("#patron_id", patronId)
+        page.fill("#book_id", book_id)
+        page.click("text=Process Return")
+
+        return_message = f'Returned "{bookTitle}". No late fee.'
+        expect(page.locator(".flash-success")).to_have_text(return_message)
+
+        browser.close()
