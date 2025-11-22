@@ -93,6 +93,9 @@ def test_lookup_and_return_book():
         page.fill("#patron_id", patronId)
         page.click("text=Lookup")
 
+        #ensuring the book appears in the status report
+        expect(page.locator(f'text="{bookTitle}"').first).to_be_visible()
+
         #get book id from status report:
         row = page.locator(f'text="{bookTitle}"').locator('xpath=..')
         book_id = row.locator('td:nth-child(1)').first.inner_text()

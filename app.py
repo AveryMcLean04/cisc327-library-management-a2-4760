@@ -5,8 +5,9 @@ This module provides the application factory pattern for creating Flask app inst
 Routes are organized in separate blueprint modules in the routes package.
 """
 
+import os
 from flask import Flask
-from database import init_database, add_sample_data
+from database import init_database, add_sample_data, clear_database
 from routes import register_blueprints
 
 
@@ -20,9 +21,12 @@ def create_app():
     app = Flask(__name__)
     app.secret_key = "super secret key"
     
+    if os.environ.get("RESET_DB") == "1":
+        clear_database()
+
     # Initialize the database
     init_database()
-    
+
     # Add sample data for testing and demonstration
     add_sample_data()
     

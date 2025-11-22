@@ -3,6 +3,7 @@ Database module for Library Management System
 Handles all database operations and connections
 """
 
+import os
 import sqlite3
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
@@ -267,3 +268,11 @@ def get_patron_borrow_history(patron_id: str) -> List[Dict]:
             'return_date': datetime.fromisoformat(r['return_date']) if r['return_date'] else None,
         })
     return history
+
+
+def clear_database():
+    import os
+    db_path = os.path.join(os.getcwd(), "library.db")
+    print("Clearing database")
+    if os.path.exists(db_path):
+        os.remove(db_path)
