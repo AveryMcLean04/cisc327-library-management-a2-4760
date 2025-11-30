@@ -1,9 +1,10 @@
 import pytest
-from database import init_database
+from database import init_database, clear_database
 
 @pytest.fixture(scope="function", autouse=True)
 def setup_test_db():
     """Automatically initialize a clean database before each test."""
+    clear_database()
     init_database()
 from services.library_service import (
     add_book_to_catalog

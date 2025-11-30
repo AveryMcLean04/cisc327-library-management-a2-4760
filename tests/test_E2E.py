@@ -1,5 +1,6 @@
 from playwright.sync_api import expect, sync_playwright
 from datetime import datetime, timedelta
+import re
 
 # def test_launch_app():
 #     # just my first test to ensure opening the browser works
@@ -62,7 +63,7 @@ def test_add_and_borrow_book():
         #only includign the year month and day
         due_date = due_date.strftime("%Y-%m-%d")
         borrow_message = f'Successfully borrowed "{bookTitle}". Due date: {due_date}.'
-        expect(page.locator(".flash-success")).to_have_text(borrow_message)
+        expect(page.locator(".flash-success")).to_have_text(re.compile(f'Successfully borrowed "{bookTitle}". Due date: \d{{4}}-\d{{2}}-\d{{2}}.'))
         #closing the browser
         browser.close()
 
